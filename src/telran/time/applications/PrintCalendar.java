@@ -10,7 +10,7 @@ public class PrintCalendar {
 	private static final int TITLE_OFFSET = 10;
 	private static final int WEEK_DAYS_OFFSET = 2;
 	private static final int COLUMN_WIDTH = 4;
-    private static DayOfWeek[] weekDays = DayOfWeek.values();
+    private static DayOfWeek[] daysOfWeek = DayOfWeek.values();
     private static Locale LOCALE = Locale.getDefault();
 	public static void main(String[] args) {
 		try {
@@ -26,9 +26,26 @@ public class PrintCalendar {
 	}
 
 	private static void printCalendar(RecordArguments recordArguments) {
+		setFirstDay(recordArguments.firstDay());
 		printTitle(recordArguments.month(), recordArguments.year());
 		printWeekDays();
 		printDays(recordArguments.month(), recordArguments.year());
+		
+	}
+
+	private static void setFirstDay(DayOfWeek dayOfWeek) {
+		DayOfWeek[] sourceDays = DayOfWeek.values();
+		if (dayOfWeek != daysOfWeek[0]) {
+			{
+				int dayNumber = dayOfWeek.getValue();
+				for (int i = 0; i < daysOfWeek.length; i++) {
+					int ind = dayNumber <= daysOfWeek.length ?
+							dayNumber : dayNumber - daysOfWeek.length;
+					daysOfWeek[i] = sourceDays[ind - 1];
+					dayNumber++;
+				}
+			}
+		}
 		
 	}
 
@@ -55,8 +72,12 @@ public class PrintCalendar {
 	}
 
 	private static int getFirstMonthWeekDay(int month, int year) {
-		LocalDate ld = LocalDate.of(year, month, 1);
-		return ld.get(ChronoField.DAY_OF_WEEK) ;
+		LocalDate firstDateMonth = LocalDate.of(year, month, 1);
+		int firstWeekDay = firstDateMonth.getDayOfWeek().getValue();
+		int firstValue = daysOfWeek[0].getValue();
+		int delta = firstWeekDay - firstValue + 1;
+
+		return delta >= 0 ? delta : delta + daysOfWeek.length;
 	}
 
 	private static int getMonthDays(int month, int year) {
@@ -66,7 +87,7 @@ public class PrintCalendar {
 
 	private static void printWeekDays() {
 		System.out.printf("%s", " ".repeat(WEEK_DAYS_OFFSET));
-		for(DayOfWeek dayWeek: weekDays) {
+		for(DayOfWeek dayWeek: daysOfWeek) {
 			System.out.printf("%s ",dayWeek.getDisplayName(TextStyle.SHORT, LOCALE));
 		}
 		System.out.println();
@@ -88,9 +109,18 @@ public class PrintCalendar {
 		return new RecordArguments(month, year, dayOfWeek); 
 	}
 
-	private static DayOfWeek getFirstDayOfWeek(String[] args) {
-		// TODO Auto-generated method stub
-		return null;
+	private static DayOfWeek getFirstDayOfWeek(String[] args) throws Exception {
+		return args.length > 2 ? getFirstDayOfWeek(args[2]) :
+			DayOfWeek.MONDAY;
+	}
+
+	private static DayOfWeek getFirstDayOfWeek(String firstDayStr) throws Exception {
+		try {
+			DayOfWeek res = DayOfWeek.valueOf(firstDayStr.toUpperCase());
+			return res;
+		} catch (Exception e) {
+			throw new Exception(firstDayStr.toUpperCase() + " wrong day of week");
+		}
 	}
 
 	private static int getYearArg(String[] args) throws Exception {
